@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>initialBatch</key>
+    <integer>10</integer>
+    <key>topUpBatch</key>
+    <integer>8</integer>
+    <key>prefetchThreshold</key>
+    <integer>3</integer>
+    <key>factMinIntervalSec</key>
+    <integer>18</integer>
+    <key>factMaxIntervalSec</key>
+    <integer>35</integer>
+    <key>chipMinIntervalSec</key>
+    <integer>45</integer>
+    <key>chipMaxIntervalSec</key>
+    <integer>70</integer>
+    <key>chipDwellSec</key>
+    <integer>10</integer>
+    <key>enableEditorial</key>
+    <true/>
+    <key>colorIntensity</key>
+    <string>standard</string>
+    <key>defaultMode</key>
+    <string>wall</string>
+</dict>
+</plist>
+
