@@ -44,8 +44,8 @@ final class RemoteConfigService: ObservableObject {
             "chipMaxIntervalSec": remoteConfig["chipMaxIntervalSec"].numberValue.intValue,
             "chipDwellSec": remoteConfig["chipDwellSec"].numberValue.intValue,
             "enableEditorial": remoteConfig["enableEditorial"].boolValue,
-            "colorIntensity": remoteConfig["colorIntensity"].stringValue ?? RemoteConfigValues.defaults.colorIntensity,
-            "defaultMode": remoteConfig["defaultMode"].stringValue ?? RemoteConfigValues.defaults.defaultMode
+            "colorIntensity": remoteConfig["colorIntensity"].stringValue,
+            "defaultMode": remoteConfig["defaultMode"].stringValue
         ]
 
         do {
