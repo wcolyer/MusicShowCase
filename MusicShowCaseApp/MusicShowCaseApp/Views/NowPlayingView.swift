@@ -6,7 +6,7 @@ struct NowPlayingView: View {
     var body: some View {
         ZStack {
             LinearGradient(
-                colors: [Color.purple.opacity(0.6), Color.blue.opacity(0.6)],
+                colors: [PaletteService.shared.current.start, PaletteService.shared.current.end],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             ).ignoresSafeArea()
