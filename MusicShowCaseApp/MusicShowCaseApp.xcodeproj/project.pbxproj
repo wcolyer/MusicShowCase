@@ -6,6 +6,19 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		B6DC9F302E463B1E0024936B /* FirebaseAI in Frameworks */ = {isa = PBXBuildFile; productRef = B6DC9F2F2E463B1E0024936B /* FirebaseAI */; };
+		B6DC9F322E463B1E0024936B /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = B6DC9F312E463B1E0024936B /* FirebaseAnalytics */; };
+		B6DC9F342E463B1E0024936B /* FirebaseAnalyticsCore in Frameworks */ = {isa = PBXBuildFile; productRef = B6DC9F332E463B1E0024936B /* FirebaseAnalyticsCore */; };
+		B6DC9F362E463B1E0024936B /* FirebaseAnalyticsIdentitySupport in Frameworks */ = {isa = PBXBuildFile; productRef = B6DC9F352E463B1E0024936B /* FirebaseAnalyticsIdentitySupport */; };
+		B6DC9F382E463B1E0024936B /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = B6DC9F372E463B1E0024936B /* FirebaseAppCheck */; };
+		B6DC9F3A2E463B1E0024936B /* FirebaseAppDistribution-Beta in Frameworks */ = {isa = PBXBuildFile; productRef = B6DC9F392E463B1E0024936B /* FirebaseAppDistribution-Beta */; };
+		B6DC9F3C2E463B1E0024936B /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = B6DC9F3B2E463B1E0024936B /* FirebaseAuth */; };
+		B6DC9F3E2E463B1E0024936B /* FirebaseAuthCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = B6DC9F3D2E463B1E0024936B /* FirebaseAuthCombine-Community */; };
+		B6DC9F402E463B1E0024936B /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = B6DC9F3F2E463B1E0024936B /* FirebaseCore */; };
+		B6DC9F422E463B1E0024936B /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = B6DC9F412E463B1E0024936B /* FirebaseCrashlytics */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		B6DC9F192E4630580024936B /* MusicShowCaseApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MusicShowCaseApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +36,16 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B6DC9F362E463B1E0024936B /* FirebaseAnalyticsIdentitySupport in Frameworks */,
+				B6DC9F322E463B1E0024936B /* FirebaseAnalytics in Frameworks */,
+				B6DC9F342E463B1E0024936B /* FirebaseAnalyticsCore in Frameworks */,
+				B6DC9F382E463B1E0024936B /* FirebaseAppCheck in Frameworks */,
+				B6DC9F302E463B1E0024936B /* FirebaseAI in Frameworks */,
+				B6DC9F3C2E463B1E0024936B /* FirebaseAuth in Frameworks */,
+				B6DC9F3A2E463B1E0024936B /* FirebaseAppDistribution-Beta in Frameworks */,
+				B6DC9F422E463B1E0024936B /* FirebaseCrashlytics in Frameworks */,
+				B6DC9F402E463B1E0024936B /* FirebaseCore in Frameworks */,
+				B6DC9F3E2E463B1E0024936B /* FirebaseAuthCombine-Community in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +88,16 @@
 			);
 			name = MusicShowCaseApp;
 			packageProductDependencies = (
+				B6DC9F2F2E463B1E0024936B /* FirebaseAI */,
+				B6DC9F312E463B1E0024936B /* FirebaseAnalytics */,
+				B6DC9F332E463B1E0024936B /* FirebaseAnalyticsCore */,
+				B6DC9F352E463B1E0024936B /* FirebaseAnalyticsIdentitySupport */,
+				B6DC9F372E463B1E0024936B /* FirebaseAppCheck */,
+				B6DC9F392E463B1E0024936B /* FirebaseAppDistribution-Beta */,
+				B6DC9F3B2E463B1E0024936B /* FirebaseAuth */,
+				B6DC9F3D2E463B1E0024936B /* FirebaseAuthCombine-Community */,
+				B6DC9F3F2E463B1E0024936B /* FirebaseCore */,
+				B6DC9F412E463B1E0024936B /* FirebaseCrashlytics */,
 			);
 			productName = MusicShowCaseApp;
 			productReference = B6DC9F192E4630580024936B /* MusicShowCaseApp.app */;
@@ -94,6 +127,9 @@
 			);
 			mainGroup = B6DC9F102E4630580024936B;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				B6DC9F2E2E463B1E0024936B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = B6DC9F1A2E4630580024936B /* Products */;
 			projectDirPath = "";
@@ -262,7 +298,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ecolyer.MusicShowCaseApp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ecolyer.musicshowcase;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -288,7 +324,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ecolyer.MusicShowCaseApp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ecolyer.musicshowcase;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -318,6 +354,70 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		B6DC9F2E2E463B1E0024936B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.1.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B6DC9F2F2E463B1E0024936B /* FirebaseAI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B6DC9F2E2E463B1E0024936B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAI;
+		};
+		B6DC9F312E463B1E0024936B /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B6DC9F2E2E463B1E0024936B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		B6DC9F332E463B1E0024936B /* FirebaseAnalyticsCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B6DC9F2E2E463B1E0024936B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalyticsCore;
+		};
+		B6DC9F352E463B1E0024936B /* FirebaseAnalyticsIdentitySupport */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B6DC9F2E2E463B1E0024936B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalyticsIdentitySupport;
+		};
+		B6DC9F372E463B1E0024936B /* FirebaseAppCheck */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B6DC9F2E2E463B1E0024936B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAppCheck;
+		};
+		B6DC9F392E463B1E0024936B /* FirebaseAppDistribution-Beta */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B6DC9F2E2E463B1E0024936B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = "FirebaseAppDistribution-Beta";
+		};
+		B6DC9F3B2E463B1E0024936B /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B6DC9F2E2E463B1E0024936B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		B6DC9F3D2E463B1E0024936B /* FirebaseAuthCombine-Community */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B6DC9F2E2E463B1E0024936B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = "FirebaseAuthCombine-Community";
+		};
+		B6DC9F3F2E463B1E0024936B /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B6DC9F2E2E463B1E0024936B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		B6DC9F412E463B1E0024936B /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B6DC9F2E2E463B1E0024936B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = B6DC9F112E4630580024936B /* Project object */;
 }
