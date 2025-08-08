@@ -35,14 +35,14 @@ final class RemoteConfigService: ObservableObject {
 
     private func decodeValues() -> RemoteConfigValues {
         let json: [String: Any] = [
-            "initialBatch": remoteConfig["initialBatch"].numberValue?.intValue ?? RemoteConfigValues.defaults.initialBatch,
-            "topUpBatch": remoteConfig["topUpBatch"].numberValue?.intValue ?? RemoteConfigValues.defaults.topUpBatch,
-            "prefetchThreshold": remoteConfig["prefetchThreshold"].numberValue?.intValue ?? RemoteConfigValues.defaults.prefetchThreshold,
-            "factMinIntervalSec": remoteConfig["factMinIntervalSec"].numberValue?.intValue ?? RemoteConfigValues.defaults.factMinIntervalSec,
-            "factMaxIntervalSec": remoteConfig["factMaxIntervalSec"].numberValue?.intValue ?? RemoteConfigValues.defaults.factMaxIntervalSec,
-            "chipMinIntervalSec": remoteConfig["chipMinIntervalSec"].numberValue?.intValue ?? RemoteConfigValues.defaults.chipMinIntervalSec,
-            "chipMaxIntervalSec": remoteConfig["chipMaxIntervalSec"].numberValue?.intValue ?? RemoteConfigValues.defaults.chipMaxIntervalSec,
-            "chipDwellSec": remoteConfig["chipDwellSec"].numberValue?.intValue ?? RemoteConfigValues.defaults.chipDwellSec,
+            "initialBatch": remoteConfig["initialBatch"].numberValue.intValue,
+            "topUpBatch": remoteConfig["topUpBatch"].numberValue.intValue,
+            "prefetchThreshold": remoteConfig["prefetchThreshold"].numberValue.intValue,
+            "factMinIntervalSec": remoteConfig["factMinIntervalSec"].numberValue.intValue,
+            "factMaxIntervalSec": remoteConfig["factMaxIntervalSec"].numberValue.intValue,
+            "chipMinIntervalSec": remoteConfig["chipMinIntervalSec"].numberValue.intValue,
+            "chipMaxIntervalSec": remoteConfig["chipMaxIntervalSec"].numberValue.intValue,
+            "chipDwellSec": remoteConfig["chipDwellSec"].numberValue.intValue,
             "enableEditorial": remoteConfig["enableEditorial"].boolValue,
             "colorIntensity": remoteConfig["colorIntensity"].stringValue ?? RemoteConfigValues.defaults.colorIntensity,
             "defaultMode": remoteConfig["defaultMode"].stringValue ?? RemoteConfigValues.defaults.defaultMode

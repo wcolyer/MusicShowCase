@@ -17,6 +17,8 @@
 		B6DC9F3E2E463B1E0024936B /* FirebaseAuthCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = B6DC9F3D2E463B1E0024936B /* FirebaseAuthCombine-Community */; };
 		B6DC9F402E463B1E0024936B /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = B6DC9F3F2E463B1E0024936B /* FirebaseCore */; };
 		B6DC9F422E463B1E0024936B /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = B6DC9F412E463B1E0024936B /* FirebaseCrashlytics */; };
+		B6DC9F462E463B1E0024936B /* FirebaseRemoteConfig in Frameworks */ = {isa = PBXBuildFile; productRef = B6DC9F432E463B1E0024936B /* FirebaseRemoteConfig */; };
+		B6DC9F482E463B1E0024936B /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = B6DC9F452E463B1E0024936B /* FirebaseFunctions */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -36,6 +38,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B6DC9F462E463B1E0024936B /* FirebaseRemoteConfig in Frameworks */,
+				B6DC9F482E463B1E0024936B /* FirebaseFunctions in Frameworks */,
 				B6DC9F362E463B1E0024936B /* FirebaseAnalyticsIdentitySupport in Frameworks */,
 				B6DC9F322E463B1E0024936B /* FirebaseAnalytics in Frameworks */,
 				B6DC9F342E463B1E0024936B /* FirebaseAnalyticsCore in Frameworks */,
@@ -98,6 +102,8 @@
 				B6DC9F3D2E463B1E0024936B /* FirebaseAuthCombine-Community */,
 				B6DC9F3F2E463B1E0024936B /* FirebaseCore */,
 				B6DC9F412E463B1E0024936B /* FirebaseCrashlytics */,
+				B6DC9F432E463B1E0024936B /* FirebaseRemoteConfig */,
+				B6DC9F452E463B1E0024936B /* FirebaseFunctions */,
 			);
 			productName = MusicShowCaseApp;
 			productReference = B6DC9F192E4630580024936B /* MusicShowCaseApp.app */;
@@ -416,6 +422,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = B6DC9F2E2E463B1E0024936B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseCrashlytics;
+		};
+		B6DC9F432E463B1E0024936B /* FirebaseRemoteConfig */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B6DC9F2E2E463B1E0024936B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseRemoteConfig;
+		};
+		B6DC9F452E463B1E0024936B /* FirebaseFunctions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B6DC9F2E2E463B1E0024936B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFunctions;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
