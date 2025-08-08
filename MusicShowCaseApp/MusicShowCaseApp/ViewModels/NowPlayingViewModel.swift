@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import SwiftUI
 
 @MainActor
 final class NowPlayingViewModel: ObservableObject {
@@ -12,6 +13,7 @@ final class NowPlayingViewModel: ObservableObject {
     @Published var currentNoteLane: OverlayLane = .topLeft
 
     private var factTimer: AnyCancellable?
+    private var hideFactTask: Task<Void, Never>?
     private var noteTimer: AnyCancellable?
     private var lastFactShownAt: Date?
     private var lastNoteShownAt: Date?
@@ -38,6 +40,7 @@ final class NowPlayingViewModel: ObservableObject {
     }
 
     func start() {
+        debug("start()")
         Task { await config.fetchAndActivate() }
         Task { await prefetchInitialFacts() }
         scheduleFacts()
@@ -55,6 +58,11 @@ final class NowPlayingViewModel: ObservableObject {
             )
             factsQueue.append(contentsOf: fetched)
         } catch { }
+        if currentFact == nil, !factsQueue.isEmpty {
+            withAnimation(.easeInOut(duration: 0.6)) {
+                currentFact = factsQueue.removeFirst()
+            }
+        }
     }
 
     private func topUpIfNeeded() {
@@ -73,20 +81,24 @@ final class NowPlayingViewModel: ObservableObject {
     }
 
     private func scheduleFacts() {
-        let minInterval = TimeInterval(config.values.factMinIntervalSec)
-        let maxInterval = TimeInterval(config.values.factMaxIntervalSec)
-        let interval = Double.random(in: minInterval...maxInterval)
+        // Near-continuous flow: dwell 3–5s, short buffer
+        let insertionDuration: Double = 0.6
+        let dwell = Double.random(in: 3...5)
+        let interval = insertionDuration + dwell + 0.3
+        debug("scheduleFacts: dwell=\(String(format: "%.1f", dwell))s in=\(String(format: "%.1f", interval))s")
 
         factTimer = Timer.publish(every: interval, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
                 guard let self else { return }
+                self.debug("fact timer fired")
                 // Enforce 6s separation from notes
                 if let lastNote = self.lastNoteShownAt, Date().timeIntervalSince(lastNote) < 6 {
+                    self.debug("skip fact due to 6s separation from note")
                     self.scheduleFacts()
                     return
                 }
-                self.showNextFact()
+                self.showNextFact(dwell: dwell)
                 self.topUpIfNeeded()
                 self.scheduleFacts()
             }
@@ -97,20 +109,27 @@ final class NowPlayingViewModel: ObservableObject {
         let minInterval = TimeInterval(config.values.chipMinIntervalSec)
         let maxInterval = TimeInterval(config.values.chipMaxIntervalSec)
         let interval = Double.random(in: minInterval...maxInterval)
+        debug("scheduleNotes in \(String(format: "%.1f", interval))s")
 
         noteTimer = Timer.publish(every: interval, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
                 guard let self else { return }
+                self.debug("note timer fired")
                 Task { [weak self] in
                     guard let self else { return }
                     // Enforce 6s separation from facts
                     if let lastFact = self.lastFactShownAt, Date().timeIntervalSince(lastFact) < 6 {
+                        self.debug("skip note due to 6s separation from fact")
                         self.scheduleNotes()
                         return
                     }
-                    self.currentNote = await self.appleMusic.currentEditorialNote()
-                    self.currentNoteLane = self.nextLane(excluding: self.lastUsedNoteLane)
+                    let note = await self.appleMusic.currentEditorialNote()
+                    withAnimation(.easeInOut(duration: 0.6)) {
+                        self.currentNote = note
+                        self.currentNoteLane = self.nextLane(excluding: self.lastUsedNoteLane)
+                    }
+                    self.debug("note shown lane=\(self.currentNoteLane)")
                     self.lastUsedNoteLane = self.currentNoteLane
                     self.lastNoteShownAt = Date()
                     self.scheduleNotes()
@@ -118,19 +137,64 @@ final class NowPlayingViewModel: ObservableObject {
             }
     }
 
-    private func showNextFact() {
+    private func showNextFact(dwell: Double? = nil) {
         guard !factsQueue.isEmpty else { return }
-        currentFact = factsQueue.removeFirst()
-        currentFactLane = nextLane(excluding: lastUsedFactLane)
+        withAnimation(.easeInOut(duration: 0.6)) {
+            currentFact = factsQueue.removeFirst()
+            // Facts should dwell mid/top, not bottom
+            currentFactLane = nextFactLane(previous: lastUsedFactLane)
+        }
         lastUsedFactLane = currentFactLane
         lastFactShownAt = Date()
+        debug("fact shown lane=\(currentFactLane)")
+
+        // Schedule hide after dwell (3–5s by default if not provided)
+        hideFactTask?.cancel()
+        let dwellSeconds = dwell ?? Double.random(in: 3...5)
+        hideFactTask = Task { [weak self] in
+            guard let self else { return }
+            let insertionDuration: Double = 0.6
+            do {
+                try await Task.sleep(nanoseconds: UInt64((dwellSeconds + insertionDuration) * 1_000_000_000))
+            } catch {
+                self.debug("hide task canceled before sleep finished")
+                return
+            }
+            guard !Task.isCancelled else {
+                self.debug("hide task canceled flag set")
+                return
+            }
+            await MainActor.run {
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    self.currentFact = nil
+                }
+                self.debug("fact hidden after dwell=\(String(format: "%.1f", dwellSeconds))s")
+            }
+        }
+    }
+
+    private func nextFactLane(previous: OverlayLane?) -> OverlayLane {
+        // Always choose a top lane for facts to avoid dwelling at the bottom
+        let topLanes: [OverlayLane] = [.topLeft, .topRight]
+        // Alternate if possible
+        if previous == .topLeft { return .topRight }
+        if previous == .topRight { return .topLeft }
+        return topLanes.randomElement() ?? .topLeft
     }
 
     private func nextLane(excluding last: OverlayLane?) -> OverlayLane {
+        // Generic alternation used by notes
         let all = OverlayLane.allCases
         guard let last else { return all.randomElement() ?? .bottomCenter }
         let candidates = all.filter { $0 != last }
         return candidates.randomElement() ?? .bottomCenter
+    }
+
+    private func debug(_ message: String) {
+        #if DEBUG
+        let ts = String(format: "%.3f", Date().timeIntervalSince1970)
+        print("[NowPlayingVM] \(ts): \(message)")
+        #endif
     }
 }
 

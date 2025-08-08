@@ -2,6 +2,7 @@ import SwiftUI
 
 struct NowPlayingView: View {
     @StateObject private var viewModel = NowPlayingViewModel()
+    @State private var hueRotation: Angle = .degrees(0)
 
     var body: some View {
         ZStack {
@@ -9,29 +10,71 @@ struct NowPlayingView: View {
                 colors: [PaletteService.shared.current.start, PaletteService.shared.current.end],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
-            ).ignoresSafeArea()
+            )
+            .hueRotation(hueRotation)
+            .ignoresSafeArea()
+
+            // Constant ambient drift wall behind overlays
+            ZuneWallBackground()
 
             overlayLane(viewModel.currentFactLane) {
                 if let fact = viewModel.currentFact {
                     FactChip(text: fact.text)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .bottom).combined(with: .opacity),
+                            removal: .move(edge: .bottom).combined(with: .opacity)))
+                        .id(fact.id)
+                        .modifier(FloatJitter())
                 }
             }
+            .animation(.easeInOut(duration: 0.8), value: viewModel.currentFactLane)
+            .animation(.easeInOut(duration: 0.6), value: viewModel.currentFact?.id)
 
             overlayLane(viewModel.currentNoteLane) {
                 if let note = viewModel.currentNote {
                     NoteChip(text: note.text)
-                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .transition(.asymmetric(insertion: .move(edge: .top).combined(with: .opacity),
+                                                removal: .opacity))
+                        .id(note.id)
+                        .modifier(FloatJitter())
                 }
             }
+            .animation(.easeInOut(duration: 0.8), value: viewModel.currentNoteLane)
+            .animation(.easeInOut(duration: 0.6), value: viewModel.currentNote?.id)
 
-            VStack { Spacer() 
+            VStack { Spacer()
                 Text("Now Playing")
                     .font(.title2.weight(.semibold))
                     .padding(.bottom, 24)
             }
         }
-        .onAppear { viewModel.start() }
+        .onAppear {
+            viewModel.start()
+            let drift = Double.random(in: 40...60)
+            if UIAccessibility.isReduceMotionEnabled {
+                hueRotation = .degrees(0)
+                print("[NowPlayingView] Reduce Motion ON: disabled hue drift")
+            } else {
+                withAnimation(.easeInOut(duration: drift).repeatForever(autoreverses: true)) {
+                    hueRotation = .degrees(50)
+                }
+                print("[NowPlayingView] Hue drift duration=\(drift)s")
+            }
+        }
+    }
+}
+
+private struct FloatJitter: ViewModifier {
+    @State private var phase: CGFloat = 0
+    func body(content: Content) -> some View {
+        content
+            .offset(x: sin(phase) * 3, y: cos(phase * 0.8) * 3)
+            .onAppear {
+                let base = Double.random(in: 8...14)
+                withAnimation(.easeInOut(duration: base).repeatForever(autoreverses: true)) {
+                    phase = .pi * 2
+                }
+            }
     }
 }
 
@@ -60,18 +103,32 @@ private extension NowPlayingView {
     @ViewBuilder
     func overlayLane<T: View>(_ lane: NowPlayingViewModel.OverlayLane, @ViewBuilder content: @escaping () -> T) -> some View {
         GeometryReader { proxy in
-            let position = position(for: lane, in: proxy.size)
+            let size = proxy.size
+            let marginX = size.width * 0.06
+            let maxWidth = size.width * 0.5
+            let half = maxWidth / 2
+            let minCenterX = half + marginX
+            let maxCenterX = size.width - half - marginX
+            let position = position(for: lane, in: size, minCenterX: minCenterX, maxCenterX: maxCenterX)
             content()
+                .frame(maxWidth: maxWidth)
+                .fixedSize(horizontal: false, vertical: true)
                 .position(position)
         }
     }
 
-    func position(for lane: NowPlayingViewModel.OverlayLane, in size: CGSize) -> CGPoint {
+    func position(for lane: NowPlayingViewModel.OverlayLane, in size: CGSize, minCenterX: CGFloat, maxCenterX: CGFloat) -> CGPoint {
+        // Centers are clamped so a view of width <= 50% never goes off-screen
+        let leftX = minCenterX
+        let rightX = maxCenterX
+        let topY = size.height * 0.22
+        let midY = size.height * 0.55
+        let bottomY = size.height * 0.78
         switch lane {
-        case .topLeft: return CGPoint(x: size.width * 0.2, y: size.height * 0.2)
-        case .topRight: return CGPoint(x: size.width * 0.8, y: size.height * 0.2)
-        case .bottomRight: return CGPoint(x: size.width * 0.8, y: size.height * 0.8)
-        case .bottomCenter: return CGPoint(x: size.width * 0.5, y: size.height * 0.8)
+        case .topLeft: return CGPoint(x: leftX, y: topY)
+        case .topRight: return CGPoint(x: rightX, y: topY)
+        case .bottomRight: return CGPoint(x: rightX, y: bottomY)
+        case .bottomCenter: return CGPoint(x: size.width * 0.5, y: midY)
         }
     }
 }
