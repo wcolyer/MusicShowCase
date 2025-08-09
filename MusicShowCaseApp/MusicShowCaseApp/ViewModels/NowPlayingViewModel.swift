@@ -9,17 +9,22 @@ final class NowPlayingViewModel: ObservableObject {
     @Published private(set) var factsQueue: [Fact] = []
     @Published var currentFact: Fact?
     @Published var currentNote: EditorialNote?
+    @Published var interstitialArtwork: UIImage?
     @Published var currentFactLane: OverlayLane = .bottomCenter
     @Published var currentNoteLane: OverlayLane = .topLeft
 
     private var factTimer: AnyCancellable?
     private var hideFactTask: Task<Void, Never>?
+    private var factsSinceArtworkChange: Int = 0
     private var noteTimer: AnyCancellable?
     private var lastFactShownAt: Date?
     private var lastNoteShownAt: Date?
     private var lastUsedFactLane: OverlayLane?
     private var lastUsedNoteLane: OverlayLane?
     private var lastArtworkKey: String?
+    private var artworkImages: [UIImage] = []
+    private var artworkIndex: Int = 0
+    private var artworkMeta: [(image: UIImage, pixelSize: CGSize)] = []
 
     private let factsService: FactsServiceProtocol
     private let config: RemoteConfigService
@@ -88,12 +93,26 @@ final class NowPlayingViewModel: ObservableObject {
                 max: initial
             )
             factsQueue.append(contentsOf: fetched)
+            // Collect multiple artwork candidates for interstitial display
+            let candidates = await ArtworkService.shared.fetchArtworkCandidates(
+                artistName: currentArtistName,
+                albumName: currentAlbumName,
+                title: nil,
+                max: 6
+            )
+            let images = candidates.compactMap { UIImage(data: $0) }
+            let meta = images.map { ($0, CGSize(width: $0.cgImage?.width ?? Int($0.size.width * $0.scale), height: $0.cgImage?.height ?? Int($0.size.height * $0.scale))) }
+            await MainActor.run {
+                self.artworkImages = images
+                self.artworkMeta = meta
+            }
         } catch { }
         if currentFact == nil, !factsQueue.isEmpty {
             withAnimation(.easeInOut(duration: 0.6)) {
                 currentFact = factsQueue.removeFirst()
             }
             updateArtworkIfNeeded()
+            factsSinceArtworkChange = 0
         }
     }
 
@@ -124,6 +143,12 @@ final class NowPlayingViewModel: ObservableObject {
             .sink { [weak self] _ in
                 guard let self else { return }
                 self.debug("fact timer fired")
+                // Optionally show an artwork interstitial instead of a fact
+                if self.shouldShowArtworkInterstitial() {
+                    self.showArtworkInterstitial()
+                    self.scheduleFacts()
+                    return
+                }
                 // Enforce 6s separation from notes
                 if let lastNote = self.lastNoteShownAt, Date().timeIntervalSince(lastNote) < 6 {
                     self.debug("skip fact due to 6s separation from note")
@@ -171,6 +196,8 @@ final class NowPlayingViewModel: ObservableObject {
 
     private func showNextFact(dwell: Double? = nil) {
         guard !factsQueue.isEmpty else { return }
+        // Ensure any artwork interstitial is hidden
+        if interstitialArtwork != nil { interstitialArtwork = nil }
         withAnimation(.easeInOut(duration: 0.6)) {
             currentFact = factsQueue.removeFirst()
             // Facts should dwell mid/top, not bottom
@@ -180,7 +207,14 @@ final class NowPlayingViewModel: ObservableObject {
         lastFactShownAt = Date()
         debug("fact shown lane=\(currentFactLane)")
 
-        updateArtworkIfNeeded()
+        // Rotate artwork image occasionally to keep visuals fresh
+        factsSinceArtworkChange += 1
+        if shouldAdvanceArtwork() {
+            lastArtworkKey = nil
+            updateArtworkIfNeeded()
+            factsSinceArtworkChange = 0
+            debug("advanced artwork after facts=")
+        }
 
         // Schedule hide after dwell (3–5s by default if not provided)
         hideFactTask?.cancel()
@@ -203,6 +237,39 @@ final class NowPlayingViewModel: ObservableObject {
                     self.currentFact = nil
                 }
                 self.debug("fact hidden after dwell=\(String(format: "%.1f", dwellSeconds))s")
+            }
+        }
+    }
+
+    private func shouldShowArtworkInterstitial() -> Bool {
+        guard !artworkImages.isEmpty else { return false }
+        // Do not overlap with fact display
+        if currentFact != nil { return false }
+        // Respect separation from notes
+        if let lastNote = lastNoteShownAt, Date().timeIntervalSince(lastNote) < 6 { return false }
+        // Frequency based on available images
+        switch artworkImages.count {
+        case 4...: return Bool.random() // ~50%
+        case 2...3: return Int.random(in: 0...2) == 0 // ~33%
+        default: return Int.random(in: 0...4) == 0 // ~20%
+        }
+    }
+
+    private func showArtworkInterstitial() {
+        guard !artworkImages.isEmpty else { return }
+        let image = artworkImages[artworkIndex % artworkImages.count]
+        artworkIndex += 1
+        withAnimation(.easeInOut(duration: 0.5)) {
+            interstitialArtwork = image
+        }
+        let dwell = Double.random(in: 2.5...3.5)
+        Task { [weak self] in
+            guard let self else { return }
+            do { try await Task.sleep(nanoseconds: UInt64(dwell * 1_000_000_000)) } catch { return }
+            await MainActor.run {
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    self.interstitialArtwork = nil
+                }
             }
         }
     }
@@ -233,6 +300,22 @@ final class NowPlayingViewModel: ObservableObject {
 }
 
 extension NowPlayingViewModel {
+    private func shouldAdvanceArtwork() -> Bool {
+        // Every 4-5 facts, or more often if multiple palettes are available for current art
+        // If PaletteService found many palettes, bias toward more frequent changes
+        let paletteCount = PaletteService.shared.paletteCount
+        if paletteCount >= 4 {
+            // change about every 3 facts
+            return factsSinceArtworkChange >= Int.random(in: 3...4)
+        } else if paletteCount >= 2 {
+            // change every 4-5 facts
+            return factsSinceArtworkChange >= Int.random(in: 4...5)
+        } else {
+            // only one palette; change less frequently
+            return factsSinceArtworkChange >= Int.random(in: 5...7)
+        }
+    }
+
     private func updateArtworkIfNeeded() {
         let artworkKey = "\(currentArtistName.lowercased())|\(currentAlbumName.lowercased())"
         guard artworkKey != lastArtworkKey else { return }

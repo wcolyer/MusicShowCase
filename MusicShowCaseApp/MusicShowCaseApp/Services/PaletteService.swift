@@ -12,6 +12,7 @@ final class PaletteService: ObservableObject {
     static let shared = PaletteService()
     @Published private(set) var current: Palette = Palette(start: .purple.opacity(0.6), end: .blue.opacity(0.6))
     @Published var lastArtwork: UIImage?
+    @Published private(set) var paletteCount: Int = 1
 
     private var paletteSequence: [Palette] = []
     private var sequenceIndex: Int = 0
@@ -30,6 +31,26 @@ final class PaletteService: ObservableObject {
                 self.current = first
                 self.lastArtwork = uiImage
             }
+        }
+        self.paletteCount = max(1, self.paletteSequence.count)
+        scheduleNextCycle()
+    }
+
+    func updateForMultipleArtworks(_ images: [Data]) {
+        // Build palettes across multiple images to increase variety
+        var allPalettes: [Palette] = []
+        for data in images {
+            if let ui = UIImage(data: data), let cg = ui.cgImage {
+                let ci = CIImage(cgImage: cg)
+                allPalettes.append(contentsOf: Self.buildPaletteSequence(from: ci))
+            }
+        }
+        if allPalettes.isEmpty { return }
+        self.paletteSequence = allPalettes
+        self.paletteCount = allPalettes.count
+        self.sequenceIndex = 0
+        withAnimation(.easeInOut(duration: 1.0)) {
+            self.current = allPalettes.first!
         }
         scheduleNextCycle()
     }

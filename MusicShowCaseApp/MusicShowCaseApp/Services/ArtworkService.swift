@@ -92,6 +92,12 @@ final class ArtworkService {
 
     private func searchArtworkURL(url: URL) async throws -> URL? {
         let (data, _) = try await session.data(from: url)
+        // Try higher sizes first, then fall back
+        for size in [2000, 1500, 1200, 1000] {
+            if let url = extractArtworkURL(from: data, targetSize: size) {
+                return url
+            }
+        }
         return extractArtworkURL(from: data, targetSize: 1000)
     }
 
@@ -105,6 +111,50 @@ final class ArtworkService {
             .replacingOccurrences(of: "/100x100", with: "/\(targetSize)x\(targetSize)")
             .replacingOccurrences(of: "http://", with: "https://")
         return URL(string: upscaled)
+    }
+
+    // Fetch multiple candidate artworks (album/song) and return their image data
+    func fetchArtworkCandidates(artistName: String, albumName: String?, title: String?, max: Int = 4) async -> [Data] {
+        var candidates: [Data] = []
+        // Build a broader search (limit up to max*2 to increase diversity)
+        var termComponents: [String] = [artistName]
+        if let albumName, !albumName.isEmpty { termComponents.append(albumName) }
+        if let title, !title.isEmpty { termComponents.append(title) }
+        let term = termComponents.joined(separator: " ")
+            .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+
+        // Try album first then song, with higher limits
+        let urls: [URL] = [
+            URL(string: "https://itunes.apple.com/search?term=\(term)&media=music&entity=album&country=US&limit=\(max*2)")!,
+            URL(string: "https://itunes.apple.com/search?term=\(term)&media=music&entity=song&country=US&limit=\(max*2)")!
+        ]
+        do {
+            for url in urls {
+                let (data, _) = try await session.data(from: url)
+                struct SearchResponse: Decodable { let results: [Result] }
+                struct Result: Decodable { let artworkUrl100: String? }
+                guard let response = try? JSONDecoder().decode(SearchResponse.self, from: data) else { continue }
+                for res in response.results {
+                    guard let raw = res.artworkUrl100 else { continue }
+                    let up = raw
+                        .replacingOccurrences(of: "/100x100bb", with: "/1000x1000bb")
+                        .replacingOccurrences(of: "/100x100", with: "/1000x1000")
+                        .replacingOccurrences(of: "http://", with: "https://")
+                    let key = up as NSString
+                    if let cached = cache.object(forKey: key) {
+                        candidates.append(cached as Data)
+                    } else if let u = URL(string: up) {
+                        do {
+                            let (img, _) = try await session.data(from: u)
+                            cache.setObject(img as NSData, forKey: key)
+                            candidates.append(img)
+                        } catch { continue }
+                    }
+                    if candidates.count >= max { return candidates }
+                }
+            }
+        } catch { }
+        return candidates
     }
 }
 

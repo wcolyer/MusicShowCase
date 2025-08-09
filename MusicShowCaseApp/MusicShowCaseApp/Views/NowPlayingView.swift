@@ -17,6 +17,36 @@ struct NowPlayingView: View {
             // Constant ambient drift wall behind overlays
             ZuneWallBackground()
 
+            // Interstitial artwork tile (never larger than 1/4 screen; respects image resolution)
+            GeometryReader { geo in
+                if let art = viewModel.interstitialArtwork {
+                    let screen = geo.size
+                    let maxTile = CGSize(width: screen.width * 0.35, height: screen.height * 0.35)
+                    // Compute best-fit size under resolution and quarter-screen cap
+                    let pixelW = art.cgImage?.width ?? Int(art.size.width * art.scale)
+                    let pixelH = art.cgImage?.height ?? Int(art.size.height * art.scale)
+                    let maxDisplayW = min(maxTile.width, CGFloat(pixelW))
+                    let maxDisplayH = min(maxTile.height, CGFloat(pixelH))
+                    let aspect = art.size.width / art.size.height
+                    let targetW = min(maxDisplayW, maxDisplayH * aspect)
+                    let targetH = targetW / aspect
+
+                    Image(uiImage: art)
+                        .resizable()
+                        .interpolation(.high)
+                        .scaledToFill()
+                        .frame(width: targetW, height: targetH)
+                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 18)
+                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        )
+                        .modifier(ArtworkMotion())
+                        .transition(.scale.combined(with: .opacity))
+                        .position(x: screen.width * 0.78, y: screen.height * 0.70)
+                }
+            }
+
             overlayLane(viewModel.currentFactLane) {
                 if let fact = viewModel.currentFact {
                     FactChip(text: fact.text)
@@ -74,7 +104,9 @@ struct NowPlayingView: View {
             }
             NotificationCenter.default.addObserver(forName: .init("ApplySimulatedNowPlayingItem"), object: nil, queue: .main) { note in
                 if let item = note.object as? NowPlayingItem {
-                    viewModel.applySimulatedNowPlaying(item: item)
+                    Task { @MainActor in
+                        viewModel.applySimulatedNowPlaying(item: item)
+                    }
                 }
             }
         }
@@ -85,11 +117,29 @@ private struct FloatJitter: ViewModifier {
     @State private var phase: CGFloat = 0
     func body(content: Content) -> some View {
         content
-            .offset(x: sin(phase) * 3, y: cos(phase * 0.8) * 3)
+            .offset(x: CGFloat(sin(Double(phase))) * 3,
+                    y: CGFloat(cos(Double(phase) * 0.8)) * 3)
             .onAppear {
                 let base = Double.random(in: 8...14)
                 withAnimation(.easeInOut(duration: base).repeatForever(autoreverses: true)) {
                     phase = .pi * 2
+                }
+            }
+    }
+}
+
+private struct ArtworkMotion: ViewModifier {
+    @State private var t: CGFloat = 0
+    func body(content: Content) -> some View {
+        content
+            // gentle drift, slight scale and hue shifts for drama
+            .rotationEffect(.degrees(sin(Double(t)) * 2))
+            .scaleEffect(1.0 + 0.02 * CGFloat(cos(Double(t) * 1.1)))
+            .hueRotation(.degrees(sin(Double(t) * 0.7) * 6))
+            .saturation(1.0 + 0.05 * CGFloat(sin(Double(t) * 0.9)))
+            .onAppear {
+                withAnimation(.easeInOut(duration: Double.random(in: 8...12)).repeatForever(autoreverses: true)) {
+                    t = .pi * 2
                 }
             }
     }
