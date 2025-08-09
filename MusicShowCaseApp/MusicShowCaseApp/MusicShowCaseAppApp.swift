@@ -30,6 +30,14 @@ struct MusicShowCaseAppApp: App {
                 ContentView()
             }
             .environmentObject(coordinator)
+            .onReceive(NotificationCenter.default.publisher(for: .init("NowPlayingCoordinatorUpdated"))) { _ in
+                if let item = coordinator.currentItem {
+                    Task { @MainActor in
+                        // Bridge into the active NowPlayingViewModel via Notification
+                        NotificationCenter.default.post(name: .init("ApplySimulatedNowPlayingItem"), object: item)
+                    }
+                }
+            }
         }
     }
 }

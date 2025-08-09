@@ -24,7 +24,6 @@ final class NowPlayingViewModel: ObservableObject {
     private let factsService: FactsServiceProtocol
     private let config: RemoteConfigService
     private let appleMusic: AppleMusicServiceProtocol
-    @EnvironmentObject private var coordinator: NowPlayingCoordinator
 
     // Placeholder current track info; wire to MusicKit later
     var currentArtistName: String = "Daft Punk"
@@ -41,7 +40,11 @@ final class NowPlayingViewModel: ObservableObject {
         self.appleMusic = appleMusic
     }
 
+    private var hasStarted = false
+
     func start() {
+        guard !hasStarted else { return }
+        hasStarted = true
         debug("start()")
         Task {
             await config.fetchAndActivate()
@@ -51,6 +54,17 @@ final class NowPlayingViewModel: ObservableObject {
         }
         scheduleFacts()
         scheduleNotes()
+    }
+
+    func applySimulatedNowPlaying(item: NowPlayingItem) {
+        currentArtistName = item.artistName
+        currentAlbumName = item.albumName
+        currentReleaseYear = item.releaseYear ?? currentReleaseYear
+        factsQueue.removeAll()
+        currentFact = nil
+        lastArtworkKey = nil
+        updateArtworkIfNeeded()
+        Task { await prefetchInitialFacts() }
     }
 
     private func refreshFromNowPlaying() async {
@@ -79,6 +93,7 @@ final class NowPlayingViewModel: ObservableObject {
             withAnimation(.easeInOut(duration: 0.6)) {
                 currentFact = factsQueue.removeFirst()
             }
+            updateArtworkIfNeeded()
         }
     }
 
@@ -165,16 +180,7 @@ final class NowPlayingViewModel: ObservableObject {
         lastFactShownAt = Date()
         debug("fact shown lane=\(currentFactLane)")
 
-        // Fetch artwork in background and update palette (artist + album only)
-        let artworkKey = "\(currentArtistName.lowercased())|\(currentAlbumName.lowercased())"
-        if artworkKey != lastArtworkKey {
-            lastArtworkKey = artworkKey
-            Task.detached { [artist = currentArtistName, album = currentAlbumName] in
-                if let data = await ArtworkService.shared.fetchArtworkData(artistName: artist, albumName: album, title: nil) {
-                    await MainActor.run { PaletteService.shared.updateForArtwork(data) }
-                }
-            }
-        }
+        updateArtworkIfNeeded()
 
         // Schedule hide after dwell (3–5s by default if not provided)
         hideFactTask?.cancel()
@@ -223,6 +229,19 @@ final class NowPlayingViewModel: ObservableObject {
         let ts = String(format: "%.3f", Date().timeIntervalSince1970)
         print("[NowPlayingVM] \(ts): \(message)")
         #endif
+    }
+}
+
+extension NowPlayingViewModel {
+    private func updateArtworkIfNeeded() {
+        let artworkKey = "\(currentArtistName.lowercased())|\(currentAlbumName.lowercased())"
+        guard artworkKey != lastArtworkKey else { return }
+        lastArtworkKey = artworkKey
+        Task.detached { [artist = currentArtistName, album = currentAlbumName] in
+            if let data = await ArtworkService.shared.fetchArtworkData(artistName: artist, albumName: album, title: nil) {
+                await MainActor.run { PaletteService.shared.updateForArtwork(data) }
+            }
+        }
     }
 }
 

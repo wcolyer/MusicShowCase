@@ -15,7 +15,13 @@ struct BrowseView: View {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 16) {
                                 ForEach(section.items) { item in
-                                    Button(action: { coordinator.simulatePlay(card: item) }) {
+                                    Button(action: {
+                                        #if DEBUG
+                                        let t = String(format: "%.3f", Date.timeIntervalSinceReferenceDate)
+                                        print("[Browse] \(t): tap -> simulatePlay title=\(item.title)")
+                                        #endif
+                                        coordinator.simulatePlay(card: item)
+                                    }) {
                                         MediaCardView(title: item.title, subtitle: item.subtitle, artworkURL: item.artworkURL)
                                     }
                                     .buttonStyle(.plain)

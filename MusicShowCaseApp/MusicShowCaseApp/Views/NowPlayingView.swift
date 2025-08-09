@@ -72,6 +72,11 @@ struct NowPlayingView: View {
                 }
                 print("[NowPlayingView] Hue drift duration=\(drift)s")
             }
+            NotificationCenter.default.addObserver(forName: .init("ApplySimulatedNowPlayingItem"), object: nil, queue: .main) { note in
+                if let item = note.object as? NowPlayingItem {
+                    viewModel.applySimulatedNowPlaying(item: item)
+                }
+            }
         }
     }
 }
