@@ -8,25 +8,32 @@
 import SwiftUI
 
 struct ContentView: View {
+    @EnvironmentObject private var coordinator: NowPlayingCoordinator
     var body: some View {
-        TabView {
+        TabView(selection: $coordinator.selectedTab) {
             NowPlayingView()
                 .tabItem { Label("Now Playing", systemImage: "play.circle") }
+                .tag(0)
 
-            Text("Listen Now")
+            ListenNowView()
                 .tabItem { Label("Listen Now", systemImage: "music.note.house") }
+                .tag(1)
 
             Text("Library")
                 .tabItem { Label("Library", systemImage: "square.stack.3d.up") }
+                .tag(2)
 
-            Text("Browse")
+            BrowseView()
                 .tabItem { Label("Browse", systemImage: "globe") }
+                .tag(3)
 
             Text("Search")
                 .tabItem { Label("Search", systemImage: "magnifyingglass") }
+                .tag(4)
 
             Text("Settings")
                 .tabItem { Label("Settings", systemImage: "gearshape") }
+                .tag(5)
         }
     }
 }

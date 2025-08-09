@@ -19,10 +19,12 @@ final class NowPlayingViewModel: ObservableObject {
     private var lastNoteShownAt: Date?
     private var lastUsedFactLane: OverlayLane?
     private var lastUsedNoteLane: OverlayLane?
+    private var lastArtworkKey: String?
 
     private let factsService: FactsServiceProtocol
     private let config: RemoteConfigService
     private let appleMusic: AppleMusicServiceProtocol
+    @EnvironmentObject private var coordinator: NowPlayingCoordinator
 
     // Placeholder current track info; wire to MusicKit later
     var currentArtistName: String = "Daft Punk"
@@ -41,10 +43,25 @@ final class NowPlayingViewModel: ObservableObject {
 
     func start() {
         debug("start()")
-        Task { await config.fetchAndActivate() }
-        Task { await prefetchInitialFacts() }
+        Task {
+            await config.fetchAndActivate()
+            try? await appleMusic.requestAuthorizationIfNeeded()
+            await refreshFromNowPlaying()
+            await prefetchInitialFacts()
+        }
         scheduleFacts()
         scheduleNotes()
+    }
+
+    private func refreshFromNowPlaying() async {
+        if let now = await appleMusic.currentNowPlaying() {
+            currentArtistName = now.artistName
+            currentAlbumName = now.albumName
+            currentReleaseYear = now.releaseYear ?? currentReleaseYear
+            debug("NowPlaying: artist=\(currentArtistName) album=\(currentAlbumName) year=\(currentReleaseYear)")
+        } else {
+            debug("NowPlaying: no item")
+        }
     }
 
     private func prefetchInitialFacts() async {
@@ -147,6 +164,17 @@ final class NowPlayingViewModel: ObservableObject {
         lastUsedFactLane = currentFactLane
         lastFactShownAt = Date()
         debug("fact shown lane=\(currentFactLane)")
+
+        // Fetch artwork in background and update palette (artist + album only)
+        let artworkKey = "\(currentArtistName.lowercased())|\(currentAlbumName.lowercased())"
+        if artworkKey != lastArtworkKey {
+            lastArtworkKey = artworkKey
+            Task.detached { [artist = currentArtistName, album = currentAlbumName] in
+                if let data = await ArtworkService.shared.fetchArtworkData(artistName: artist, albumName: album, title: nil) {
+                    await MainActor.run { PaletteService.shared.updateForArtwork(data) }
+                }
+            }
+        }
 
         // Schedule hide after dwell (3–5s by default if not provided)
         hideFactTask?.cancel()

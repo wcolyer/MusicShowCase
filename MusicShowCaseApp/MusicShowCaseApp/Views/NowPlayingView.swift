@@ -47,6 +47,18 @@ struct NowPlayingView: View {
                     .font(.title2.weight(.semibold))
                     .padding(.bottom, 24)
             }
+
+            // Debug: show last artwork thumbnail at top-left
+            if let img = PaletteService.shared.lastArtwork {
+                Image(uiImage: img)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 160, height: 160)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.2), lineWidth: 1))
+                    .padding()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            }
         }
         .onAppear {
             viewModel.start()

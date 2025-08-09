@@ -23,11 +23,13 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 struct MusicShowCaseAppApp: App {
     // Register app delegate for Firebase setup
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
+    @StateObject private var coordinator = NowPlayingCoordinator()
     var body: some Scene {
         WindowGroup {
             NavigationView {
                 ContentView()
             }
+            .environmentObject(coordinator)
         }
     }
 }
